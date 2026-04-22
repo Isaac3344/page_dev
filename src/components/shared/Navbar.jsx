@@ -2,7 +2,7 @@ import { Link, NavLink } from "react-router-dom";
 import { MessageCircle, Star } from "lucide-react";
 
 export default function Navbar() {
-  const whatsappNumber = "593999999999";
+  const whatsappNumber = "593997623522";
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     "Hola, quiero información sobre una página web."
   )}`;
