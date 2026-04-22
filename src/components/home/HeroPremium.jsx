@@ -14,7 +14,7 @@ const stats = [
 ];
 
 export default function HeroPremium() {
-  const whatsappNumber = "593999999999";
+  const whatsappNumber = "593997623522";
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     "Hola, quiero mi página web."
   )}`;
