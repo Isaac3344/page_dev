@@ -1,16 +1,16 @@
 import { useMemo, useState } from "react";
 import SectionTitle from "../components/ui/SectionTitle";
+import ExtraCard from "../components/cotizador/ExtraCard";
 import QuoteSummary from "../components/cotizador/QuoteSummary";
-import ExtraItem from "../components/cotizador/ExtraItem";
-import { planes } from "../data/planes";
 import { extras } from "../data/extras";
+import { planes } from "../data/planes";
 import { formatPrice } from "../utils/formatPrice";
 
 export default function Cotizador() {
-  const [planId, setPlanId] = useState("landing");
+  const [planId, setPlanId] = useState("profesional");
   const [paginasExtra, setPaginasExtra] = useState(0);
   const [productosExtra, setProductosExtra] = useState(0);
-  const [extrasSeleccionados, setExtrasSeleccionados] = useState([]);
+  const [extrasSeleccionados, setExtrasSeleccionados] = useState(["whatsapp"]);
 
   const planActivo = useMemo(
     () => planes.find((plan) => plan.id === planId) ?? planes[0],
@@ -25,41 +25,47 @@ export default function Cotizador() {
     );
   };
 
-  const resumen = useMemo(() => {
-    const seleccionados = extras.filter((extra) =>
+  const detallesCotizacion = useMemo(() => {
+    const extrasActivos = extras.filter((extra) =>
       extrasSeleccionados.includes(extra.id)
     );
-
-    const totalExtras = seleccionados.reduce((sum, extra) => sum + extra.precio, 0);
-    const totalPaginas = paginasExtra * planActivo.extraPagina;
-    const totalProductos = productosExtra * planActivo.extraProducto;
-    const total = planActivo.precio + totalExtras + totalPaginas + totalProductos;
+    const totalExtras = extrasActivos.reduce((sum, extra) => sum + extra.precio, 0);
+    const totalPaginasExtra = paginasExtra * planActivo.extraPagina;
+    const totalProductosExtra = productosExtra * planActivo.extraProducto;
+    const total =
+      planActivo.precio +
+      totalExtras +
+      totalPaginasExtra +
+      totalProductosExtra;
 
     return {
-      seleccionados,
+      extrasActivos,
       totalExtras,
-      totalPaginas,
-      totalProductos,
+      totalPaginasExtra,
+      totalProductosExtra,
       total,
     };
   }, [extrasSeleccionados, paginasExtra, productosExtra, planActivo]);
 
-  const whatsappNumber = "+593997623522";
-  const whatsappMessage = encodeURIComponent(
-    [
-      "Hola, quiero cotizar una página web.",
+  const whatsappNumber = "593997623522";
+
+  const whatsappMessage = useMemo(() => {
+    const lineas = [
+      "Hola, vi tu página web y quiero una cotización.",
       "",
       `Plan: ${planActivo.nombre} (${formatPrice(planActivo.precio)})`,
       `Páginas extra: ${paginasExtra}`,
       `Productos extra: ${productosExtra}`,
       `Extras: ${
-        resumen.seleccionados.length
-          ? resumen.seleccionados.map((e) => e.nombre).join(", ")
+        detallesCotizacion.extrasActivos.length > 0
+          ? detallesCotizacion.extrasActivos.map((e) => e.nombre).join(", ")
           : "Ninguno"
       }`,
-      `Total estimado: ${formatPrice(resumen.total)}`,
-    ].join("\n")
-  );
+      `Total estimado: ${formatPrice(detallesCotizacion.total)}`,
+    ];
+
+    return encodeURIComponent(lineas.join("\n"));
+  }, [planActivo, paginasExtra, productosExtra, detallesCotizacion]);
 
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
@@ -67,12 +73,12 @@ export default function Cotizador() {
     <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
       <SectionTitle
         eyebrow="Cotizador"
-        title="Calcula el precio de tu página web"
-        text="Selecciona un plan base, agrega módulos y obtén una estimación al instante."
+        title="Calcula una cotización en segundos"
+        text="Ajusta tu plan, agrega extras y obtén un estimado listo para enviar por WhatsApp."
       />
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
+      <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_0.95fr]">
+        <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="space-y-8">
             <div>
               <label className="mb-3 block text-sm font-medium text-slate-200">
@@ -81,7 +87,7 @@ export default function Cotizador() {
               <select
                 value={planId}
                 onChange={(e) => setPlanId(e.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-cyan-400"
+                className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
               >
                 {planes.map((plan) => (
                   <option key={plan.id} value={plan.id}>
@@ -100,12 +106,11 @@ export default function Cotizador() {
                   type="number"
                   min="0"
                   value={paginasExtra}
-                  onChange={(e) => setPaginasExtra(Math.max(0, Number(e.target.value) || 0))}
-                  className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-cyan-400"
+                  onChange={(e) =>
+                    setPaginasExtra(Math.max(0, Number(e.target.value) || 0))
+                  }
+                  className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
                 />
-                <p className="mt-2 text-xs text-slate-400">
-                  {formatPrice(planActivo.extraPagina)} por página adicional.
-                </p>
               </div>
 
               <div>
@@ -116,22 +121,21 @@ export default function Cotizador() {
                   type="number"
                   min="0"
                   value={productosExtra}
-                  onChange={(e) => setProductosExtra(Math.max(0, Number(e.target.value) || 0))}
-                  className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-cyan-400"
+                  onChange={(e) =>
+                    setProductosExtra(Math.max(0, Number(e.target.value) || 0))
+                  }
+                  className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
                 />
-                <p className="mt-2 text-xs text-slate-400">
-                  {formatPrice(planActivo.extraProducto)} por producto adicional.
-                </p>
               </div>
             </div>
 
             <div>
               <label className="mb-4 block text-sm font-medium text-slate-200">
-                Extras y módulos
+                Extras
               </label>
               <div className="grid gap-3 sm:grid-cols-2">
                 {extras.map((extra) => (
-                  <ExtraItem
+                  <ExtraCard
                     key={extra.id}
                     extra={extra}
                     active={extrasSeleccionados.includes(extra.id)}
@@ -145,7 +149,7 @@ export default function Cotizador() {
 
         <QuoteSummary
           planActivo={planActivo}
-          resumen={resumen}
+          detallesCotizacion={detallesCotizacion}
           paginasExtra={paginasExtra}
           productosExtra={productosExtra}
           whatsappUrl={whatsappUrl}
